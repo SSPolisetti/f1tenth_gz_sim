@@ -1,0 +1,22 @@
+.vscode
+
+build/
+install/
+log/
+
+*.pyc
+*.pyo
+__pycache__/
+*.so
+*.dylib
+*.dll
+
+
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+
+. bag
+.bag.active
