@@ -4,10 +4,10 @@ controller_manager:
     use_sim_time: true
   
   position_controller:
-    type: forward_command_controller/ForwardCommandController
+    type: position_controllers/JointGroupPositionController
 
   velocity_controller:
-    type: forward_command_controller/ForwardCommandController
+    type: velocity_controllers/JointVelocityPositionController
 
   joint_state_broadcaster:
     type: joint_state_broadcaster/JointStateBroadcaster
@@ -19,12 +19,9 @@ position_controller:
       - front_left_steering
       - front_right_steering
 
-    interface_name: position
 
 velocity_controller:
   ros__parameters:
     joints:
       - back_left_spinning
       - back_right_spinning
-
-    interface_name: velocity

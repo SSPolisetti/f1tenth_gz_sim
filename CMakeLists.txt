@@ -9,17 +9,26 @@ endif()
 find_package(ament_cmake REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
-# find_package(robot_state_publisher REQUIRED)
+find_package(robot_state_publisher REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(ackermann_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 
+include_directories(include)
+
+
+add_executable(ackermann_vehicle_controller src/ackermann_vehicle_controller.cpp)
+ament_target_dependencies(ackermann_vehicle_controller rclcpp ackermann_msgs std_msgs)
 
 install(
-  DIRECTORY launch
+  DIRECTORY launch model config
   DESTINATION share/${PROJECT_NAME}
 )
 
-install(
-  DIRECTORY model
-  DESTINATION share/${PROJECT_NAME}
+install(TARGETS
+  ackermann_vehicle_controller
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)

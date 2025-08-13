@@ -1,0 +1,4 @@
+ackermann_vehicle_controller:
+  ros__params:
+    steering_publish_topic: "/position_controller/commands"
+    traction_publish_topic: "/velocity_controller/commands"

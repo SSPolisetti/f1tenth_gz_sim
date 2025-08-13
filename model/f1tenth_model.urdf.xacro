@@ -16,7 +16,11 @@
     <xacro:property name="knuckle_radius" value="0.0025" />
     <xacro:property name="knuckle_mass" value="${arm_mass * (arm_length - knuckle_radius) / arm_length}" />
     <xacro:property name="max_steering_angle" value="0.36" />
-    <xacro:property name="max_steering_velocity" value="2.0" />
+    <xacro:property name="max_steering_angular_velocity" value="2.0" />
+    <xacro:property name="max_wheel_angular_velocity" value="20.0"/>
+    <xacro:property name="wheel_mu" value="1.5" />
+    <xacro:property name="chassis_mu" value="0.1" />
+
 
     <material name="papaya orange">
         <color rgba="1.0 ${128 / 255} 0.0 1.0" />
@@ -244,8 +248,24 @@
     </ros2_control>
     
     <gazebo>
-        <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin" />
+        <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+            <parameters>$(find f1tenth_gz_sim)/config/vehicle_controllers.yaml</parameters>
+        </plugin>
     </gazebo>
 
+
+    <xacro:macro name="gz_friction" params="link mu">
+        <gazebo reference="${link}">
+            <mu1>${mu}</mu1>
+            <mu2>${mu}</mu2>
+        </gazebo>
+    </xacro:macro>
+
+    <xacro:gz_friction link="front_left_wheel" mu="${wheel_mu)" />
+    <xacro:gz_friction link="front_right_wheel" mu="${wheel_mu)" />
+    <xacro:gz_friction link="back_left_wheel" mu="${wheel_mu)" />
+    <xacro:gz_friction link="back_right_wheel" mu="${wheel_mu)" />
+
+    <xacro:gz_friction link="chassis" mu="${chassis_mu)" />
 
 </robot>
