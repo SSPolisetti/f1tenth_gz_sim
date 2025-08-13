@@ -20,3 +20,5 @@ Makefile
 
 . bag
 .bag.active
+
+.DS_Store
