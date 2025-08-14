@@ -63,7 +63,26 @@ std::pair<double,double> f1tenth_control::AckermannVehicleController::calculate_
 
 void f1tenth_control::AckermannVehicleController::timer_callback()
 {
+    auto new_angles = calculate_ackermann_steering();
+    auto new_velocities = calculate_ackermann_traction();
 
+    auto position_msg = std_msgs::msg::Float64MultiArray();
+    auto velocity_msg = std_msgs::msg::Float64MultiArray();
+
+    std::vector<double> positions = {new_angles.first, new_angles.second};
+    std::vector<double> velocties= {new_velocities.first, new_velocities.second};
+
+    position_msg.data = positions;
+    velocity_msg.data = velocties;
+
+    steering_positions_pub_->publish(position_msg);
+    traction_velocities_pub_->publish(velocity_msg);    
 }
 
-
+int main(int argc, char * argv[])
+{
+  rclcpp::init(argc, argv);
+  rclcpp::spin(std::make_shared<f1tenth_control::AckermannVehicleController>());
+  rclcpp::shutdown();
+  return 0;
+}
