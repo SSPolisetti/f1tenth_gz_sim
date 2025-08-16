@@ -7,6 +7,9 @@ from launch.substitutions import Command, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 from launch_ros.parameter_descriptions import ParameterValue
+
+from ament_index_python.packages import get_package_share_directory
+
 import yaml
 
 
@@ -18,20 +21,24 @@ def generate_launch_description():
         urdf_file_name
     )
 
-    robot_controllers_config = PathJoinSubstitution(
-        [
-            FindPackageShare("f1tenth_gz_sim"),
-            "config",
-            "vehicle_controllers.yaml"
-        ]
-    )
+    robot_controllers_config = PathJoinSubstitution([
+        FindPackageShare("f1tenth_gz_sim"),
+        "config",
+        "vehicle_controllers.yaml"
+    ])
 
-    rviz_config_file = PathJoinSubstitution(
-        [
-            FindPackageShare("f1tenth_gz_sim"),
-            "config",
-            "f1tenth_model.rviz"
-        ]
+
+    rviz_config_file = PathJoinSubstitution([
+        FindPackageShare("f1tenth_gz_sim"),
+        "config",
+        "f1tenth_model.rviz"
+    ])
+
+
+    bridge_config_file = os.path.join(
+        get_package_share_directory("f1tenth_gz_sim"),
+        "config",
+        "bridge_parameters.yaml"
     )
 
     rviz_node = Node(
@@ -41,14 +48,6 @@ def generate_launch_description():
         output='screen',
         arguments=["-d", rviz_config_file]
 
-    )
-
-
-    control_node = Node(
-        package="controller_manager",
-        executable="ros2_control_node",
-        parameters=[robot_controllers_config],
-        output="both",
     )
         
     robot_state_pub_node = Node(
@@ -64,22 +63,28 @@ def generate_launch_description():
         }],
     )
 
+    ros_gz_bridge_node = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        arguments=["--ros-args", "-p", f"config_file:={bridge_config_file}"]
+    )
+
     joint_state_broadcaster_spawner = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["joint_state_broadcaster"],
     )
 
-    ackermann_vehicle_params_file = PathJoinSubstitution(
+    ackermann_vehicle_params_file = PathJoinSubstitution([
         FindPackageShare("f1tenth_gz_sim"),
         "config",
         "parameters.yaml"
-    )
+    ])
 
     ackermann_vehicle_node = Node(
         package="f1tenth_gz_sim",
         executable="ackermann_vehicle_controller",
-        ros_arguments=["--param-file", ]
+        parameters=[ackermann_vehicle_params_file]
     )
 
     robot_controllers_spawner = Node(
@@ -87,97 +92,90 @@ def generate_launch_description():
         executable="spawner",
         arguments=[
             "position_controller",
-            "velocity_controller"
+            "velocity_controller",
             "--param-file",
             robot_controllers_config
         ]
     )
 
 
-    map_config_path = os.path.join(
+    sim_config_path = os.path.join(
             FindPackageShare('f1tenth_gz_sim').find('f1tenth_gz_sim'),
             'config',
-            "map.yaml"
+            "sim.yaml"
     )
 
-    with open(map_config_path, 'r') as f:
-        map_config = yaml.safe_load(f)
-    world = "default"
+    with open(sim_config_path, 'r') as f:
+        sim_config = yaml.safe_load(f)
 
-    x = map_config["x"]
-    y = map_config["y"]
-    z = 0;
-    R = 0
-    P = 0;
-    Y = map_config["yaw"]
+    world = "empty.sdf"
+    x = str(sim_config["x"])
+    y = str(sim_config["y"])
+    z = str(sim_config["z"])
+    R = "0"
+    P = "0"
+    Y = str(sim_config["yaw"])
     entity_name = "f1tenth_model"
     topic = "robot_description"
     
     
-    gz_server_launch = IncludeLaunchDescription(
+    gz_sim_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("ros_gz_sim"),
-                    "launch",
-                    'gz_server.launch.py'
-                ]
-            )
+            PathJoinSubstitution([
+                FindPackageShare("ros_gz_sim"),
+                "launch",
+                'gz_sim.launch.py'
+            ])
         ),
         launch_arguments=[
-            ('gz_args', [world, '-v 4', '-r']),
+            ('gz_args', ['-v 4 -r ' + world]),
             ('on_exit_shutdown', 'True')
         ]
     )
 
 
-    spawn_gz_model_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            PathJoinSubstitution(
-                [
-                    FindPackageShare("ros_gz_sim"),
-                    "launch",
-                    'gz_spawn_model.launch.py'
-                ]
-            )
-        ),
-        launch_arguments=[
-            ("topic", topic),
-            ("entity_name", entity_name),
-            ("x", x),
-            ("y", y),
-            ("z", z),
-            ("roll", R),
-            ("pitch", P),
-            ("yaw", Y),
-            ("allow_renaming", "false")
+    spawn_gz_model_node = Node(
+        package="ros_gz_sim",
+        executable="create",
+        arguments=[
+            "-topic", topic,
+            "-entity_name", entity_name,
+            "-x", x,
+            "-y", y,
+            "-z", z,
+            "-R", R,
+            "-P", P,
+            "-Y", Y,
+            "-allow_renaming", "false"
         ]
+        
     )
-
-
-
+    
     return LaunchDescription([
 
-        control_node,
         robot_state_pub_node,
-        gz_server_launch,
-        spawn_gz_model_launch,
-
+        gz_sim_launch,
+        spawn_gz_model_node,
+        joint_state_broadcaster_spawner,
+        robot_controllers_spawner,
+        rviz_node,
+        ros_gz_bridge_node
         # delay the joint state broadcaster from running until after the model is spawned in gazebo
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=spawn_gz_model_launch,
-                on_exit=[joint_state_broadcaster_spawner]
-            )
-        ),
+        # RegisterEventHandler(
+        #     event_handler=OnProcessExit(
+        #         target_action=spawn_gz_model_node,
+        #         on_exit=[joint_state_broadcaster_spawner]
+        #     )
+        # ),
 
-        # delay rviz and the controllers from starting until after the joint_state_broadcaster has been spawned
-        RegisterEventHandler(
-            event_handler=OnProcessExit(
-                target_action=joint_state_broadcaster_spawner,
-                on_exit=[rviz_node, robot_controllers_spawner]
-            )
-        )
+        # # delay rviz and the controllers from starting until after the joint_state_broadcaster has been spawned
+        # RegisterEventHandler(
+        #     event_handler=OnProcessExit(
+        #         target_action=joint_state_broadcaster_spawner,
+        #         on_exit=[rviz_node, robot_controllers_spawner]
+        #     )
+        # ),
+        
 
     ])
 

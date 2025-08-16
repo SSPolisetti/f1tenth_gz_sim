@@ -12,6 +12,7 @@ f1tenth_control::AckermannVehicleController::AckermannVehicleController()
     this->declare_parameter<std::string>("traction_publish_topic");
 
     
+    
     steering_positions_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
         this->get_parameter("steering_publish_topic").as_string(),
         10

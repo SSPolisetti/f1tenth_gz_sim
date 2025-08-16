@@ -191,7 +191,7 @@
             <parent link="${prefix}_arm" />
             <child link="${prefix}_steering_knuckle" />
             <axis xyz="0 0 1" />
-            <limit lower="${-max_steering_angle}" upper="${max_steering_angle}" effort="10.0" velocity="${max_steering_velocity}"/>
+            <limit lower="${-max_steering_angle}" upper="${max_steering_angle}" effort="10.0" velocity="${max_steering_angular_velocity}"/>
             <origin xyz="0 ${y_offset} 0" rpy="0 0 0" />
         </joint>
     </xacro:macro>
@@ -226,9 +226,16 @@
     </xacro:macro>
 
 
+    <xacro:macro name="ros2_control_cmd_spinning" params="prefix">
+        <joint name="${prefix}_spinning">
+            <command_interface name="velocity" /> 
+            <state_interface name="velocity"/>
+            <state_interface name="position"/>
+        </joint>
+    </xacro:macro>
+
     <xacro:macro name="ros2_control_spinning" params="prefix">
         <joint name="${prefix}_spinning">
-            <command_interface  name="velocity" /> 
             <state_interface name="velocity"/>
             <state_interface name="position"/>
         </joint>
@@ -241,8 +248,10 @@
 
         <xacro:ros2_control_steering prefix="front_left" max_angle="${max_steering_angle}"/>
         <xacro:ros2_control_steering prefix="front_right" max_angle="${max_steering_angle}"/>
-        <xacro:ros2_control_spinning prefix="back_left"/>
-        <xacro:ros2_control_spinning prefix="back_right"/>
+        <xacro:ros2_control_spinning prefix="front_left"/>
+        <xacro:ros2_control_spinning prefix="front_right"/>
+        <xacro:ros2_control_cmd_spinning prefix="back_left"/>
+        <xacro:ros2_control_cmd_spinning prefix="back_right"/>
 
 
     </ros2_control>
@@ -261,11 +270,11 @@
         </gazebo>
     </xacro:macro>
 
-    <xacro:gz_friction link="front_left_wheel" mu="${wheel_mu)" />
-    <xacro:gz_friction link="front_right_wheel" mu="${wheel_mu)" />
-    <xacro:gz_friction link="back_left_wheel" mu="${wheel_mu)" />
-    <xacro:gz_friction link="back_right_wheel" mu="${wheel_mu)" />
+    <xacro:gz_friction link="front_left_wheel" mu="${wheel_mu}" />
+    <xacro:gz_friction link="front_right_wheel" mu="${wheel_mu}" />
+    <xacro:gz_friction link="back_left_wheel" mu="${wheel_mu}" />
+    <xacro:gz_friction link="back_right_wheel" mu="${wheel_mu}" />
 
-    <xacro:gz_friction link="chassis" mu="${chassis_mu)" />
+    <xacro:gz_friction link="chassis" mu="${chassis_mu}" />
 
 </robot>
