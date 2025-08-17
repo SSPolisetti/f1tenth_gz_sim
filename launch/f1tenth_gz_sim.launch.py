@@ -158,6 +158,7 @@ def generate_launch_description():
         spawn_gz_model_node,
         joint_state_broadcaster_spawner,
         robot_controllers_spawner,
+        ackermann_vehicle_node,
         rviz_node,
         ros_gz_bridge_node
         # delay the joint state broadcaster from running until after the model is spawned in gazebo

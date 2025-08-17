@@ -2,3 +2,14 @@ ackermann_vehicle_controller:
   ros__parameters:
     steering_publish_topic: "/position_controller/commands"
     traction_publish_topic: "/velocity_controller/commands"
+
+    ackermann_percentage: 1.0 
+
+    wheelbase: 0.324
+    kp_track_width: 0.21364
+
+    maximum_steering_angle: 0.36 # rad
+    maximum_steering_angle_velocity:  # rad / s
+    maximum_speed: 60 # m/s
+    maximum_acceleration: 0
+    maximum_jerk: 0

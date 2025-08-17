@@ -10,12 +10,12 @@
     <xacro:property name="wheel_radius" value="0.0381" />
     <xacro:property name="wheel_length" value="0.04318" />
     <xacro:property name="tire_thickness" value="0.012" />
-    <xacro:property name="arm_length" value="0.012" />
+    <xacro:property name="arm_length" value="0.019" />
     <xacro:property name="arm_radius" value="0.005" />
     <xacro:property name="arm_mass" value="0.005" />
     <xacro:property name="knuckle_radius" value="0.0025" />
     <xacro:property name="knuckle_mass" value="${arm_mass * (arm_length - knuckle_radius) / arm_length}" />
-    <xacro:property name="max_steering_angle" value="0.36" />
+    <xacro:property name="max_steering_angle" value="0.6" />
     <xacro:property name="max_steering_angular_velocity" value="2.0" />
     <xacro:property name="max_wheel_angular_velocity" value="20.0"/>
     <xacro:property name="wheel_mu" value="1.5" />
@@ -181,10 +181,10 @@
     </xacro:macro>
 
     <!-- Wheel Spinning joint definition -->
-    <xacro:spinning_joint prefix="front_left" parent="steering_knuckle" y_offset="${-(knuckle_radius + wheel_length / 2)}" />
-    <xacro:spinning_joint prefix="front_right" parent="steering_knuckle" y_offset="${knuckle_radius + wheel_length / 2}" />
-    <xacro:spinning_joint prefix="back_left" parent="arm" y_offset="${-(arm_length / 2 + wheel_length / 2)}" />
-    <xacro:spinning_joint prefix="back_right" parent="arm" y_offset="${arm_length / 2 + wheel_length / 2}" />
+    <xacro:spinning_joint prefix="front_right" parent="steering_knuckle" y_offset="${-(knuckle_radius + wheel_length / 2)}" />
+    <xacro:spinning_joint prefix="front_left" parent="steering_knuckle" y_offset="${knuckle_radius + wheel_length / 2}" />
+    <xacro:spinning_joint prefix="back_right" parent="arm" y_offset="${-(arm_length / 2 + wheel_length / 2)}" />
+    <xacro:spinning_joint prefix="back_left" parent="arm" y_offset="${arm_length / 2 + wheel_length / 2}" />
 
     <xacro:macro name="steering_joint" params="prefix y_offset" >
         <joint name="${prefix}_steering" type="revolute">
@@ -197,8 +197,8 @@
     </xacro:macro>
 
     <!-- Steering joint definitions -->
-    <xacro:steering_joint prefix="front_left" y_offset="${-((arm_length - knuckle_radius) / 2 + knuckle_radius)}" />
-    <xacro:steering_joint prefix="front_right" y_offset="${(arm_length - knuckle_radius) / 2 + knuckle_radius}" />
+    <xacro:steering_joint prefix="front_right" y_offset="${-((arm_length - knuckle_radius) / 2 + knuckle_radius)}" />
+    <xacro:steering_joint prefix="front_left" y_offset="${(arm_length - knuckle_radius) / 2 + knuckle_radius}" />
 
     <xacro:macro name="arm_joint" params="prefix x_offset y_offset" >
         <joint name="${prefix}_arm_fixed" type="fixed">
@@ -209,10 +209,10 @@
     </xacro:macro>
 
     <!-- Arm to chassis joints -->
-    <xacro:arm_joint prefix="front_left" x_offset="${wheelbase / 2}" y_offset="${-((arm_length - knuckle_radius) / 2 + chassis_width / 2)}" />
-    <xacro:arm_joint prefix="front_right" x_offset="${wheelbase / 2}" y_offset="${(arm_length - knuckle_radius) / 2 + chassis_width / 2}" />
-    <xacro:arm_joint prefix="back_left" x_offset="${-wheelbase / 2}" y_offset="${-(arm_length / 2 + chassis_width / 2)}" />
-    <xacro:arm_joint prefix="back_right" x_offset="${-wheelbase / 2}" y_offset="${arm_length / 2 + chassis_width / 2}" />
+    <xacro:arm_joint prefix="front_right" x_offset="${wheelbase / 2}" y_offset="${-((arm_length - knuckle_radius) / 2 + chassis_width / 2)}" />
+    <xacro:arm_joint prefix="front_left" x_offset="${wheelbase / 2}" y_offset="${(arm_length - knuckle_radius) / 2 + chassis_width / 2}" />
+    <xacro:arm_joint prefix="back_right" x_offset="${-wheelbase / 2}" y_offset="${-(arm_length / 2 + chassis_width / 2)}" />
+    <xacro:arm_joint prefix="back_left" x_offset="${-wheelbase / 2}" y_offset="${arm_length / 2 + chassis_width / 2}" />
 
     <xacro:macro name="ros2_control_steering" params="prefix max_angle">
         <joint name="${prefix}_steering">
@@ -226,7 +226,7 @@
     </xacro:macro>
 
 
-    <xacro:macro name="ros2_control_cmd_spinning" params="prefix">
+    <xacro:macro name="ros2_control_spinning" params="prefix">
         <joint name="${prefix}_spinning">
             <command_interface name="velocity" /> 
             <state_interface name="velocity"/>
@@ -234,12 +234,6 @@
         </joint>
     </xacro:macro>
 
-    <xacro:macro name="ros2_control_spinning" params="prefix">
-        <joint name="${prefix}_spinning">
-            <state_interface name="velocity"/>
-            <state_interface name="position"/>
-        </joint>
-    </xacro:macro>
 
     <ros2_control name="GazeboSimSystem" type="system">
         <hardware>
@@ -250,9 +244,8 @@
         <xacro:ros2_control_steering prefix="front_right" max_angle="${max_steering_angle}"/>
         <xacro:ros2_control_spinning prefix="front_left"/>
         <xacro:ros2_control_spinning prefix="front_right"/>
-        <xacro:ros2_control_cmd_spinning prefix="back_left"/>
-        <xacro:ros2_control_cmd_spinning prefix="back_right"/>
-
+        <xacro:ros2_control_spinning prefix="back_left"/>
+        <xacro:ros2_control_spinning prefix="back_right"/>
 
     </ros2_control>
     
@@ -260,6 +253,17 @@
         <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
             <parameters>$(find f1tenth_gz_sim)/config/vehicle_controllers.yaml</parameters>
         </plugin>
+
+        <!-- <plugin filename="gz-sim-imu-system"
+            name="gz::sim::systems::Imu">
+        </plugin>
+
+        <plugin
+            filename="gz-sim-sensors-system"
+            name="gz::sim::systems::Sensors">
+            <render_engine>ogre2</render_engine>
+        </plugin> -->
+
     </gazebo>
 
 

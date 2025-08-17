@@ -1,6 +1,6 @@
 controller_manager:
   ros__parameters:
-    update_rate: 100
+    update_rate: 1000
     use_sim_time: true
   
     joint_state_broadcaster:
@@ -19,5 +19,7 @@ velocity_controller:
   ros__parameters:
     type: velocity_controllers/JointGroupVelocityController
     joints:
+      - front_left_spinning
+      - front_right_spinning
       - back_left_spinning
       - back_right_spinning
