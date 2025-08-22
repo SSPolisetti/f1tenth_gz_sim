@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+
+<sdf version="1.11">
+    
+    <world name="zandvoort">
+        <physics name="1ms" type="ignored">
+            <max_step_size>0.001</max_step_size>
+            <real_time_factor>1.0</real_time_factor>
+        </physics>
+        <plugin
+            filename="gz-sim-physics-system"
+            name="gz::sim::systems::Physics">
+        </plugin>
+        <plugin
+            filename="gz-sim-user-commands-system"
+            name="gz::sim::systems::UserCommands">
+        </plugin>
+        <plugin
+            filename="gz-sim-scene-broadcaster-system"
+            name="gz::sim::systems::SceneBroadcaster">
+        </plugin>
+        <light type="directional" name="sun" >
+            <cast_shadows>false</cast_shadows>
+            <pose>0 0 10 0 0 0</pose>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+            <specular>0.2 0.2 0.2 1</specular>
+            <direction>-0.5 0.1 -0.9</direction>
+        </light>
+        <model name="asphalt_ground_plane">
+            <static>true</static> 
+            <link name="base_link">
+                <collision name="collision">
+                    <geometry>
+                        <plane>
+                        <normal>0 0 1</normal>
+                        </plane>
+                    </geometry>
+                    <surface>
+                        <friction>
+                            <mu>0.8</mu>
+                        </friction>
+                    </surface>
+                </collision>
+                <visual name="visual">
+                    <geometry>
+                        <plane>
+                        <normal>0 0 1</normal>
+                        <size>100 100</size>
+                        </plane>
+                    </geometry>
+                    <material>
+                        <ambient>0.2 0.2 0.2 1.0</ambient>
+                        <diffuse>0.3 0.3 0.3 1.0</diffuse>
+                        <specular>0.1 0.1 0.1 1.0</specular>
+                        <emissive>0.0 0.0 0.0 1.0</emissive>
+                    </material>     
+                </visual>
+            </link>
+        </model>
+        <model name="zandvoort_track">
+            <pose>0 0 0.001 0 0 0</pose>
+            <static>true</static> 
+            <link name="base_link">
+                <collision name="collision">
+                    <geometry>
+                        <mesh>
+                            <uri>/home/ubuntu/dev_ws/f1tenth_ws/src/f1tenth_gz_sim/world/tracks/zandvoort/zandvoort.obj</uri>
+                            <scale>0.01 0.01 0.01</scale>
+                        </mesh>
+                    </geometry>
+                </collision>
+                <visual name="visual">
+                    <geometry>
+                        <mesh>
+                            <uri>/home/ubuntu/dev_ws/f1tenth_ws/src/f1tenth_gz_sim/world/tracks/zandvoort/zandvoort.obj</uri>
+                            <scale>0.01 0.01 0.01</scale>
+                        </mesh>
+                    </geometry>
+                    <material>
+                        <ambient>0.8 0.8 0.2 1.0</ambient>
+                        <diffuse>1.0 0.9 0.1 1.0</diffuse>
+                        <specular>0.2 0.2 0.1 1.0</specular>
+                        <emissive>0.0 0.0 0.0 1.0</emissive>
+                    </material>
+                </visual>
+            </link>
+        </model>
+        
+    </world>
+</sdf>

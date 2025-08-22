@@ -1,15 +1,38 @@
+/**:
+  ros__parameters:
+
+    wheelbase: 0.324
+    
+    chassis_length: 0.5
+    chassis_width: 0.18964
+    chassis_height: 0.10
+    chassis_mass: 3.44
+    chassis_mu: 0.1  
+    
+    wheel_radius: 0.0381
+    wheel_length: 0.04318
+    wheel_mass: 0.075
+    tire_thickness: 0.012
+    wheel_mu: 100.0
+  
+    arm_length: 0.019
+    arm_radius: 0.005
+    arm_mass: 0.005
+
+    knuckle_radius: 0.0025
+
+    max_wheel_angle: 0.6
+    max_steering_angular_velocity: 2.0
+    max_wheel_angular_velocity: 20.0
+
+
 ackermann_vehicle_controller:
   ros__parameters:
     steering_publish_topic: "/position_controller/commands"
     traction_publish_topic: "/velocity_controller/commands"
 
-    ackermann_percentage: 1.0 
-
-    wheelbase: 0.324
-    kp_track_width: 0.21364
-
     maximum_steering_angle: 0.36 # rad
-    maximum_steering_angle_velocity:  # rad / s
-    maximum_speed: 60 # m/s
-    maximum_acceleration: 0
-    maximum_jerk: 0
+    maximum_steering_angle_velocity: 2.0 # rad / s
+    maximum_speed: 60.0 # m/s
+    maximum_acceleration: 0.0
+    maximum_jerk: 0.0

@@ -1,4 +1,9 @@
+
 import os
+import yaml
+import xacro
+import xml
+
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, RegisterEventHandler
 from launch.event_handlers import OnProcessExit
@@ -10,33 +15,78 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 from ament_index_python.packages import get_package_share_directory
 
-import yaml
-
-
 def generate_launch_description():
-    urdf_file_name = 'f1tenth_model.urdf.xacro'
-    path_to_urdf = os.path.join(
-        FindPackageShare('f1tenth_gz_sim').find('f1tenth_gz_sim'),
-        'model',
-        urdf_file_name
+
+    package_share_dir = get_package_share_directory('f1tenth_gz_sim')
+
+    ros_params_file = os.path.join(
+        package_share_dir,
+        "config", 
+        "parameters.yaml"
+    )
+    car_description_path = os.path.join(package_share_dir, "model", "f1tenth_car.urdf.xacro")    
+
+
+    with open(ros_params_file, "r") as f:
+        car_arguments = yaml.safe_load(f)["/**"]["ros__parameters"]
+    
+    sim_config_path = os.path.join(
+        package_share_dir,
+        'config',
+        "sim.yaml"
     )
 
-    robot_controllers_config = PathJoinSubstitution([
-        FindPackageShare("f1tenth_gz_sim"),
+
+    with open(sim_config_path, "r") as f:
+        sim_config = yaml.safe_load(f)
+    
+    track = sim_config["track"]
+
+    track_config_path = os.path.join(package_share_dir, "world", "tracks", track, f"{track}.yaml")
+
+    with open(track_config_path, "r") as f:
+        track_config = yaml.safe_load(f)
+
+    world = os.path.join(package_share_dir, "world", "tracks", track, f"{track}.sdf")
+    x = str(track_config["x"])
+    y = str(track_config["y"])
+    z = str(0.0781)
+    # R = "0"
+    # P = "0"
+    Y = str(track_config["yaw"])
+    entity_name = "f1tenth_car"
+    topic = "robot_description"
+
+    print({key: str(value) for key, value in car_arguments.items()})
+
+    f1tenth_car_description = xacro.process(car_description_path, mappings={key: str(value) for key, value in car_arguments.items()})
+
+    # robot_controllers_config = PathJoinSubstitution([
+    #     FindPackageShare("f1tenth_gz_sim"),
+    #     "config",
+    #     "vehicle_controllers.yaml"
+    # ])
+
+    robot_controllers_config = os.path.join(
+        package_share_dir,
         "config",
         "vehicle_controllers.yaml"
-    ])
+    )
 
+    # rviz_config_file = PathJoinSubstitution([
+    #     FindPackageShare("f1tenth_gz_sim"),
+    #     "config",
+    #     "f1tenth_model.rviz"
+    # ])
 
-    rviz_config_file = PathJoinSubstitution([
-        FindPackageShare("f1tenth_gz_sim"),
-        "config",
+    rviz_config_file = os.path.join(
+        package_share_dir,
+        "rviz",
         "f1tenth_model.rviz"
-    ])
-
+    )
 
     bridge_config_file = os.path.join(
-        get_package_share_directory("f1tenth_gz_sim"),
+        package_share_dir,
         "config",
         "bridge_parameters.yaml"
     )
@@ -56,9 +106,7 @@ def generate_launch_description():
         name="robot_state_publisher",
         output='screen',
         parameters=[{
-            'robot_description': ParameterValue(
-                Command(['xacro ', str(path_to_urdf)]), value_type=str
-            ),
+            'robot_description': f1tenth_car_description,
             'use_sim_time': True
         }],
     )
@@ -75,16 +123,17 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster"],
     )
 
-    ackermann_vehicle_params_file = PathJoinSubstitution([
-        FindPackageShare("f1tenth_gz_sim"),
-        "config",
-        "parameters.yaml"
-    ])
+    # ackermann_vehicle_params_file = PathJoinSubstitution([
+    #     FindPackageShare("f1tenth_gz_sim"),
+    #     "config",
+    #     "parameters.yaml"
+    # ])
+
 
     ackermann_vehicle_node = Node(
         package="f1tenth_gz_sim",
         executable="ackermann_vehicle_controller",
-        parameters=[ackermann_vehicle_params_file]
+        parameters=[ros_params_file]
     )
 
     robot_controllers_spawner = Node(
@@ -96,28 +145,7 @@ def generate_launch_description():
             "--param-file",
             robot_controllers_config
         ]
-    )
-
-
-    sim_config_path = os.path.join(
-            FindPackageShare('f1tenth_gz_sim').find('f1tenth_gz_sim'),
-            'config',
-            "sim.yaml"
-    )
-
-    with open(sim_config_path, 'r') as f:
-        sim_config = yaml.safe_load(f)
-
-    world = "empty.sdf"
-    x = str(sim_config["x"])
-    y = str(sim_config["y"])
-    z = str(sim_config["z"])
-    R = "0"
-    P = "0"
-    Y = str(sim_config["yaw"])
-    entity_name = "f1tenth_model"
-    topic = "robot_description"
-    
+    )    
     
     gz_sim_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -143,16 +171,14 @@ def generate_launch_description():
             "-x", x,
             "-y", y,
             "-z", z,
-            "-R", R,
-            "-P", P,
+            # "-R", R,
+            # "-P", P,
             "-Y", Y,
             "-allow_renaming", "false"
         ]
-        
     )
     
     return LaunchDescription([
-
         robot_state_pub_node,
         gz_sim_launch,
         spawn_gz_model_node,
@@ -161,23 +187,6 @@ def generate_launch_description():
         ackermann_vehicle_node,
         rviz_node,
         ros_gz_bridge_node
-        # delay the joint state broadcaster from running until after the model is spawned in gazebo
-        # RegisterEventHandler(
-        #     event_handler=OnProcessExit(
-        #         target_action=spawn_gz_model_node,
-        #         on_exit=[joint_state_broadcaster_spawner]
-        #     )
-        # ),
-
-        # # delay rviz and the controllers from starting until after the joint_state_broadcaster has been spawned
-        # RegisterEventHandler(
-        #     event_handler=OnProcessExit(
-        #         target_action=joint_state_broadcaster_spawner,
-        #         on_exit=[rviz_node, robot_controllers_spawner]
-        #     )
-        # ),
-        
-
     ])
 
 

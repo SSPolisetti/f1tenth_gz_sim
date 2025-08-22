@@ -30,8 +30,13 @@ namespace f1tenth_control {
             double max_accel_;
             double max_jerk_;
             double wheelbase_;
+            double kp_track_width_;
             double track_width_;
-            double ackermann_percentage_;
+            double knuckle_radius_;
+            double arm_length_;
+            double chassis_width_;
+            double wheel_length_;
+            double wheel_radius_;
 
             rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr steering_positions_pub_;
             rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr traction_velocities_pub_;

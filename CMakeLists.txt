@@ -22,7 +22,7 @@ add_executable(ackermann_vehicle_controller src/ackermann_vehicle_controller.cpp
 ament_target_dependencies(ackermann_vehicle_controller rclcpp ackermann_msgs std_msgs)
 
 install(
-  DIRECTORY launch model config
+  DIRECTORY launch model config world rviz
   DESTINATION share/${PROJECT_NAME}
 )
 
