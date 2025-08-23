@@ -24,8 +24,8 @@ def generate_launch_description():
         "config", 
         "parameters.yaml"
     )
-    car_description_path = os.path.join(package_share_dir, "model", "f1tenth_car.urdf.xacro")    
 
+    car_description_path = os.path.join(package_share_dir, "model", "f1tenth_car.urdf.xacro")    
 
     with open(ros_params_file, "r") as f:
         car_arguments = yaml.safe_load(f)["/**"]["ros__parameters"]
@@ -177,6 +177,7 @@ def generate_launch_description():
             "-allow_renaming", "false"
         ]
     )
+    
     
     return LaunchDescription([
         robot_state_pub_node,

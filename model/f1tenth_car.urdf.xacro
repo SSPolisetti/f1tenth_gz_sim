@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <robot name="f1tenth_car" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
     <xacro:arg name="wheelbase" default="0.324"/>
 
     <xacro:arg name="chassis_length" default="0.5" />
@@ -47,23 +48,28 @@
     <xacro:property name="max_wheel_angle" value="$(arg max_wheel_angle)"/>
     <xacro:property name="max_steering_angular_velocity" value="$(arg max_steering_angular_velocity)" />
     <xacro:property name="max_wheel_angular_velocity" value="$(arg max_wheel_angular_velocity)"/>
-    
-    
+
     <xacro:property name="knuckle_mass" value="${arm_mass * (arm_length - 2 * knuckle_radius) / arm_length}" />
+    <xacro:property name="lidar_radius" value="0.053"/>
+    <xacro:property name="lidar_length" value="0.087"/>
+    <xacro:property name="lidar_mass" value="0.37" /> 
+    <xacro:property name="lidar_angle" value="${radians(135)}"/>
+
     
+
     <material name="papaya orange">
         <color rgba="1.0 ${128 / 255} 0.0 1.0" />
     </material>
 
-    <material name="tire color">
+    <material name="black">
         <color rgba="0.0 0.0 0.0 1.0" />
     </material>
 
-    <material name="steering link color">
+    <material name="red-orange">
         <color rgba="${189 / 255} ${55 / 255} ${10 / 255} 1.0" />
     </material>
 
-    <material name="steering arm color">
+    <material name="grey">
         <color rgba="${166 / 255} ${166 / 255} ${166 / 255} 1.0" />
     </material>
 
@@ -93,7 +99,7 @@
     <link name="chassis">
         <visual>
             <geometry>
-                <box size="${chassis_length} ${chassis_width} ${chassis_height}"/>
+                <box size="${chassis_length} ${chassis_width + 2 * arm_length} ${chassis_height}"/>
             </geometry>
             <material name="papaya orange" />
         </visual>
@@ -115,11 +121,12 @@
         </inertial>
     </xacro:macro>
 
+
     <xacro:macro name="wheel" params="prefix mass radius length">
         <link name="${prefix}_wheel">
             <visual>
                 <xacro:cylinder_geometry length="${length}" radius="${radius}" />
-                <material name="tire color"/>
+                <material name="black"/>
                 <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
             </visual>
             <collision>
@@ -147,13 +154,23 @@
         </inertial>
     </xacro:macro>
 
+
+    <xacro:macro name="cylinder_inertial" params="mass radius length">
+        <inertial>
+            <mass value="${mass}" />
+            <inertia ixx="${1 / 12 * mass * (3 * radius * radius + length * length)}" ixy="0.0" ixz="0.0" 
+                        iyy="${1 / 12 * mass * (3 * radius * radius + length * length)}" iyz="0.0" 
+                        izz="${1 / 2 * mass * radius * radius}" />
+        </inertial>
+    </xacro:macro>
     
+
 
     <xacro:macro name="arm" params="prefix mass radius length">
         <link name="${prefix}_arm">
             <visual>
                 <xacro:cylinder_geometry length="${length}" radius="${radius}" />
-                <material name="steering arm color"/>
+                <material name="grey"/>
                 <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
             </visual>
             <collision>
@@ -185,7 +202,7 @@
                 <geometry>
                     <sphere radius="${radius}"/>
                 </geometry>
-                <material name="steering link color"/>
+                <material name="red-orange"/>
             </visual>
             <collision>
                 <geometry>
@@ -243,6 +260,9 @@
     <xacro:arm_joint prefix="back_right" x_offset="${-wheelbase / 2}" y_offset="${-(arm_length / 2 + chassis_width / 2)}" />
     <xacro:arm_joint prefix="back_left" x_offset="${-wheelbase / 2}" y_offset="${arm_length / 2 + chassis_width / 2}" />
 
+
+
+
     <xacro:macro name="ros2_control_steering" params="prefix max_angle">
         <joint name="${prefix}_steering">
             <command_interface  name="position">
@@ -255,7 +275,7 @@
     </xacro:macro>
 
 
-    <xacro:macro name="ros2_control_spinning" params="prefix">
+   <xacro:macro name="ros2_control_spinning" params="prefix">
         <joint name="${prefix}_spinning">
             <command_interface name="velocity" /> 
             <state_interface name="velocity"/>
@@ -264,7 +284,7 @@
     </xacro:macro>
 
 
-    <ros2_control name="GazeboSimSystem" type="system">
+    <ros2_control name="f1tenth_car_control" type="system">
         <hardware>
             <plugin>gz_ros2_control/GazeboSimSystem</plugin>
         </hardware>
@@ -282,17 +302,16 @@
         <plugin filename="libgz_ros2_control-system.so" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
             <parameters>$(find f1tenth_gz_sim)/config/vehicle_controllers.yaml</parameters>
         </plugin>
-
-        <!-- <plugin filename="gz-sim-imu-system"
-            name="gz::sim::systems::Imu">
-        </plugin>
-
+        
         <plugin
             filename="gz-sim-sensors-system"
             name="gz::sim::systems::Sensors">
             <render_engine>ogre2</render_engine>
-        </plugin> -->
+        </plugin>
 
+        <!-- <plugin filename="gz-sim-imu-system"
+            name="gz::sim::systems::Imu">
+        </plugin> -->
     </gazebo>
 
 
@@ -310,4 +329,52 @@
 
     <xacro:gz_friction link="chassis" mu="${chassis_mu}" />
 
+
+        <!-- hokuyo lidar (UTM - 30LX) -->
+    <link name="laser_frame">
+        <collision>
+            <geometry>
+                <cylinder length="${lidar_length}" radius="${lidar_radius}"/>
+            </geometry>
+        </collision>
+        <visual>
+            <geometry>
+                <cylinder length="${lidar_length}" radius="${lidar_radius}"/>
+            </geometry>
+            <material name="black" />
+        </visual>
+        <xacro:cylinder_inertial mass="${lidar_mass}" radius="${lidar_radius}" length="${lidar_length}"/>
+    </link>
+
+
+    <joint name="laser_joint" type="fixed" >
+        <parent link="chassis" />
+        <child link="laser_frame" />
+        <origin xyz="0.14 0 ${chassis_height/2 + lidar_length / 2}" rpy="0 0 0" />
+    </joint>
+
+
+    <gazebo reference="laser_frame">
+        <sensor name="hokuyo_lidar" type="gpu_lidar">
+            <topic>/scan</topic>  
+            <pose relative_to="laser_frame"> 0 0 0 0 0 0</pose>
+            <visualize>true</visualize>
+            <always_on>true</always_on>
+            <update_rate>20</update_rate>
+            <lidar>
+                <scan>
+                    <horizontal>
+                        <samples>1440</samples>
+                        <min_angle>${-(lidar_angle)}</min_angle>
+                        <max_angle>${lidar_angle}</max_angle>
+                    </horizontal>
+                </scan>
+                <range>
+                    <min>0.1</min>
+                    <max>30</max>
+                    <resolution>0.01</resolution>
+                </range>
+            </lidar>
+        </sensor>
+    </gazebo>
 </robot>

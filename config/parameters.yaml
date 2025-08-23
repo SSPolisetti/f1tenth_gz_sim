@@ -6,7 +6,7 @@
     chassis_length: 0.5
     chassis_width: 0.18964
     chassis_height: 0.10
-    chassis_mass: 3.44
+    chassis_mass: 3.07
     chassis_mu: 0.1  
     
     wheel_radius: 0.0381
