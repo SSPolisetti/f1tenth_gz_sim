@@ -178,15 +178,21 @@ def generate_launch_description():
         ]
     )
     
+    delay_joint_state_broadcaster_after_robot_controller_spawner = RegisterEventHandler(
+        event_handler=OnProcessExit(
+            target_action=robot_controllers_spawner,
+            on_exit=[joint_state_broadcaster_spawner]
+        )
+    )
     
     return LaunchDescription([
         robot_state_pub_node,
         gz_sim_launch,
         spawn_gz_model_node,
-        joint_state_broadcaster_spawner,
+        delay_joint_state_broadcaster_after_robot_controller_spawner,
         robot_controllers_spawner,
         ackermann_vehicle_node,
-        rviz_node,
+        # rviz_node,
         ros_gz_bridge_node
     ])
 
